@@ -35,7 +35,9 @@ population_CBS_2020 <- population_CBS_raw_2020 %>%
 names(population_CBS_2020) <-str_replace_all(names(population_CBS_2020), "-", "_")
 
 #1.1.2 load and clean 2020 population file
-# add here
+
+
+# need to find and add names for geo_eara, it is difficult to explore the data in the neighborhood level without names
 
 #1.2 merge population tables
 
@@ -158,10 +160,17 @@ glimpse(CBS_place)
 
 #999.2.2 add socioeconomic data
 
-CBS_place <- left_join(CBS_place, socioeconomic_CBS, by = c("city_code", "agas_code" ) ) 
+CBS_place <- left_join(CBS_place, socioeconomic_CBS, by = c("city_code", "agas_code" ) ) %>%
+  select(  -city_name.y, -city_name_english.y, -n.y) %>% 
+  rename(city_name         = city_name.x,
+         city_name_english  =  city_name_english.x)
+
 
 write_csv(CBS_place,"products/CBS_place.csv")
 
-#rm(list = ls(pattern = "_.*_"))
+write_rds(CBS_place,file = "products/CBS_place.rds")
+
+
+##rm(list = ls(pattern = "_.*_"))
 
   
