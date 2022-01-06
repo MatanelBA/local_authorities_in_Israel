@@ -54,8 +54,12 @@ geo_area_jerusalem %>%
   geom_point() +
   scale_x_continuous(limits = c(0, 50) ) 
 
-geo_area_jerusalem_num <- geo_area_jerusalem %>% select((where(is.numeric)) )
+geo_area_jerusalem_cors <- geo_area_jerusalem %>% select(names(geo_area_jerusalem)[45:90]) %>%
+                                                  select((where(is.numeric)) )%>%
+                                                  select(-ends_with("std"), -ends_with("rank")) 
+                                                  
+names(geo_area_jerusalem)[45:90]
 
-cor_m <- cor(geo_area_jerusalem_num)
+cor_m <- cor(geo_area_jerusalem_cors)
 
-corrplot(cor_m, method = 'number') # problem = format does not suit so many varibles
+corrplot(cor_m, method = 'number') # problem = format does not suit so many variables
