@@ -1,4 +1,4 @@
-#this script load, clean and merge the "local authorities" files. the proudct is #AAA#
+#this script load, clean and merge the "local authorities" files. the product is "products/settlements_03_20.xlsx"
 
 library(pacman)
 p_load(dplyr, openxlsx, readxl,readr, tidyr, utf8)
