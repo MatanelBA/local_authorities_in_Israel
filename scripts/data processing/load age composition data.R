@@ -7,6 +7,7 @@ p_load(tidyverse, openxlsx, readxl, utf8, ggplot2, scales, magrittr, data.table)
 rm(list = objects())
 
 getwd()
+setwd("C:/Users/OWNER/Dropbox/projects/local_authorities_in_Israel") # זה לא יעבוד על מחשבים אחרים
 setwd("originals/population by sattelment and geo area/age composition by geo area")
 
 #files_list_xlsx <-list.files(full.names = TRUE)
@@ -36,7 +37,8 @@ age_composition_by_geo_area_17_18 <- map_dfr(c( "t2.xlsx",
 col_names_14_16 <-c(col_names_17_18[1:4], "sex", col_names_17_18[5:21])
 age_composition_by_geo_area_14_16 <- map_dfr(c("population_madaf_1.xls"     ,
                                                "population_madaf_1_15.xls"  ,
-                                               "population_madaf_1_16.xlsx"),
+                                               "population_madaf_1_16.xlsx"
+                                               ),
                                              read_excel, sheet = 'סה"כ אוכלוסייה', col_names = col_names_14_16, na = "..", .id = "year") %>%
                                      filter(!is.na(city_name) & !is.na(sex) ) %>%
                                      select(-sex) %>%
@@ -93,13 +95,33 @@ age_composition_by_area_pop_group <- read_excel("./population_madaf_2.xls", shee
                             as.numeric(year)+2014),
          geo_code = if_else(geo_code %in% c('סך הכל ביישוב', 'סה"כ אוכלוסייה' ),
                             0,
-                            as.numeric(geo_code) )
+                            as.numeric(geo_code)
+                            ),
+        population_group = case_when( population_group == 'סה"כ אוכלוסייה בא"ס'   ~ "total_population"  ,
+                                      population_group == 'יהודים ואחרים'         ~ "jewish_population" ,
+                                      population_group == 'ערבים'                 ~ "arab_population"
+                                     )
         ) %>%
   mutate(across(col_names_pop_group[-(2:4)], as.numeric)) %>%
-  filter(!is.na(city_name),  !is.na(geo_code) ) %>%
+  filter(!is.na(city_name),
+         !is.na(geo_code) ,
+         population_group != "total_population") %>% #to prevent duplication with the same rows in age_composition_by_geo_area
   arrange(year, city_code, geo_code )
 
-  glimpse(age_composition_by_area_pop_group)
 
-
+#3 merge the  table for total population in all cities with the table for group population in  mixed cities
   
+# glimpse(age_composition_by_area_pop_group)
+# glimpse(age_composition_by_geo_area)
+# 
+# as.data.frame(names(age_composition_by_area_pop_group),
+#       names(age_composition_by_geo_area))
+
+age_composition <- age_composition_by_geo_area %>% 
+                        mutate (population_group = "total_population") %>%
+                        bind_rows(age_composition_by_area_pop_group)   %>%
+                        relocate(population_group, .after = geo_code)  %>%
+                        arrange(year, city_type, city_code, geo_code, population_group )
+
+setwd("C:/Users/OWNER/Dropbox/projects/local_authorities_in_Israel")
+write.xlsx(age_composition, "products/age_composition_geo_area_14_20.xlsx")
