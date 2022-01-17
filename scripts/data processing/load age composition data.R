@@ -12,7 +12,7 @@ setwd("originals/population by sattelment and geo area/age composition by geo ar
 #files_list_xlsx <-list.files(full.names = TRUE)
 
 
-col_names_19 <- c('city_type', 'city_code', 'city_name', 'geo_code', 'total', '4_0', '5-9', '10-14', '15-19', '20_24', '25_29', '30_34', '35_39', '40_44', '45_49', '50_54', '55_59', '60_64', '65_69', '70_74', '75_79', '80_84', '85+')
+col_names_19 <- c('city_type', 'city_code', 'city_name', 'geo_code', 'total', '4_0', '5_9', '10_14', '15_19', '20_24', '25_29', '30_34', '35_39', '40_44', '45_49', '50_54', '55_59', '60_64', '65_69', '70_74', '75_79', '80_84', '85+' )
 age_composition_by_geo_area_2019 <- read_excel("population_madaf_2019_7.xlsx", 
                                                  sheet = 3, skip = 15, col_names = col_names_19, na = "..") %>%
                                       mutate(year = 2019,
@@ -64,3 +64,42 @@ age_composition_by_geo_area <- bind_rows(age_composition_by_geo_area_14_16,age_c
 #                                                  col_names = col_names)
 # View(age_composition_by_geo_area_2020)
 # glimpse(age_composition_by_geo_area_2020)
+
+
+
+#2. load files for age composition by population group and geo area (mixed cities only)
+
+
+#כדי שהסקריפט יעבוד באופן רציף, צריך להכניס כאן פקודה לאתחל את הדירקטורי לדיפולט של הפרוייקט
+setwd("C:/Users/OWNER/Dropbox/projects/local_authorities_in_Israel") # זה לא יעבוד על מחשבים אחרים
+setwd("originals/population by sattelment and geo area/age composition by geo area and population group/")
+
+files_list_xlsx <-list.files(full.names = TRUE)
+
+col_names_pop_group <-c(col_names_17_18[2:4],"population_group", col_names_17_18[5:21])
+
+age_composition_by_area_pop_group <- read_excel("./population_madaf_2.xls", sheet = 3, col_names = col_names_pop_group, na = "..") %>%
+                                            bind_rows(
+                                                       map_dfr(c("population_madaf_2_15.xls",
+                                                       "population_madaf_2_16.xlsx",
+                                                       "t3.xlsx",
+                                                       "population_madaf_2018.xlsx",
+                                                       "population_madaf_2019_5.xlsx",
+                                                       "population_madaf_2020_8.xlsx" ),
+                                                         read_excel, sheet = 2, col_names = col_names_pop_group, na = ".." , .id = "year")
+                                                     ) %>%
+  mutate(year     = if_else(is.na(year), 
+                            2014,
+                            as.numeric(year)+2014),
+         geo_code = if_else(geo_code %in% c('סך הכל ביישוב', 'סה"כ אוכלוסייה' ),
+                            0,
+                            as.numeric(geo_code) )
+        ) %>%
+  mutate(across(col_names_pop_group[-(2:4)], as.numeric)) %>%
+  filter(!is.na(city_name),  !is.na(geo_code) ) %>%
+  arrange(year, city_code, geo_code )
+
+  glimpse(age_composition_by_area_pop_group)
+
+
+  

@@ -95,3 +95,5 @@ write.xlsx(settlements_03_20, "products/settlements_03_20.xlsx")
 
 #settlements_list_2020 <- settlements_list_raw_2020 %>%
 #  mutate(foundation_year = as.numeric(foundation_year) )
+
+#3. load files for number of olim by city (population 5000+)
