@@ -1,4 +1,4 @@
-#this script load, clean and merge the "local authorities" files. the product is "products/settlements_03_20.xlsx"
+#this script load, clean and merge the "settlements" files. the product is "products/settlements_03_20.xlsx"
 
 library(pacman)
 p_load(dplyr, openxlsx, readxl,readr, tidyr, utf8)
@@ -6,7 +6,7 @@ p_load(tidyverse, openxlsx, readxl, utf8, ggplot2, scales, magrittr, data.table)
 
 rm(list = objects())
 
-wd <- getwd()
+getwd()
 
 col_names <- c("city_name", "city_code", "city_name_english",
                "district", "subdistrict", "natural_region", 

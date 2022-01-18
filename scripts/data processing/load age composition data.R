@@ -1,4 +1,4 @@
-#this script load, clean and merge the "age composition" files. the main product is age_composition_geo_area_14_20_long.xlsx
+#this script load, clean and merge the "age composition" files. the main product is age_composition_geo_area_14_20_long.csv
 
 library(pacman)
 p_load(dplyr, openxlsx, readxl,readr, tidyr, utf8)
