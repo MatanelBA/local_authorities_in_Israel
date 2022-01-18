@@ -6,7 +6,7 @@ p_load(tidyverse, openxlsx, readxl, utf8, ggplot2, scales, magrittr, data.table)
 
 rm(list = objects())
 
-getwd()
+wd <- getwd()
 
 col_names <- c("city_name", "city_code", "city_name_english",
                "district", "subdistrict", "natural_region", 
