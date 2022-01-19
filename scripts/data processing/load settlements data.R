@@ -10,7 +10,7 @@ getwd()
 
 col_names <- c("city_name", "city_code", "city_name_english",
                "district", "subdistrict", "natural_region", 
-               "municipal_status", "metropolin", "religion",
+               "municipal_status", "metropoline", "religion",
                "total_population", "jewish_and_other_population", "jewish_population",
                "arab_population", "foundation_year", "settlement_type",
                "organizational_belonging", "coordination", "avg_haight", 
@@ -36,13 +36,13 @@ col_names_long <- c("id", "city_name", "city_code",
                  "religion","planning_committee",
                "total_population", "jewish_and_other_population", "jewish_population",
                "arab_population", "no_pop", "coordination",
-               "metropolin", "year", 
+               "metropoline", "year", 
                   "settlement_type", "organizational_belonging",
                "settlement_type_2", "organizational_belonging_2",
                "foundation_year", "city_name_english",
                "avg_haight","police_district", "avg_haight_2",
                "city_name_2", "city_name_3","city_name_english_2",
-               "district", "municipal_status_2","metropolin_2",
+               "district", "municipal_status_2","metropoline_2",
                "religion_2", "total_population_2", "jewish_and_other_population_2",
                "jewish_population_2", "arab_population_2", "coordination_2", "avg_haight_3",
                "connection", "total_population_3",  "jewish_and_other_population_3",
@@ -79,7 +79,7 @@ settlements_03_17 <- settlements_03_17_raw %>%
          avg_haight                  = coalesce(avg_haight, avg_haight_2, avg_haight_3, avg_haight_4),
          foundation_year             = coalesce(foundation_year, foundation_year_2),
          organizational_belonging    = coalesce(organizational_belonging, organizational_belonging_2, organizational_belonging_3),
-         metropolin                  = coalesce(metropolin, metropolin_2),
+         metropoline                  = coalesce(metropoline, metropoline_2),
          settlement_type             = coalesce(settlement_type, settlement_type_2)
          ) %>%  select (one_of( col_names))
   
