@@ -1,4 +1,4 @@
-#this script load, clean and merge the "settlements" files. the product is "products/settlements_03_20.xlsx"
+#this script load, clean and merge the "settlements" files. the product is "products/settlements_03_20.csv"
 
 library(pacman)
 p_load(dplyr, openxlsx, readxl,readr, tidyr, utf8)
@@ -8,6 +8,8 @@ rm(list = objects())
 
 getwd()
 
+#1. load settlements list for every year
+
 col_names <- c("city_name", "city_code", "city_name_english",
                "district", "subdistrict", "natural_region", 
                "municipal_status", "metropoline", "religion",
@@ -15,12 +17,15 @@ col_names <- c("city_name", "city_code", "city_name_english",
                "arab_population", "foundation_year", "settlement_type",
                "organizational_belonging", "coordination", "avg_haight", 
                "planning_committee", "police_district", "year",
-               "city_name_english_2", "local_authoritis_cluster")
+               "city_name_english_2", "local_authorities_cluster")
 
 
 
 files_list_xlsx <-list.files("originals/settlements/settlements list/", pattern = "xlsx", full.names = TRUE)
-settlements_18_20 <- map_dfr(files_list_xlsx, read_excel, col_names = col_names, skip = 1 )  
+settlements_18_20 <- map_dfr(files_list_xlsx, read_excel, col_names = col_names, skip = 1 )  %>%
+                      mutate(settlement_type = as.character(settlement_type),
+                             coordination    = as.character(coordination)
+                              )
 
 ##עד כאן עובד
 
@@ -79,21 +84,51 @@ settlements_03_17 <- settlements_03_17_raw %>%
          avg_haight                  = coalesce(avg_haight, avg_haight_2, avg_haight_3, avg_haight_4),
          foundation_year             = coalesce(foundation_year, foundation_year_2),
          organizational_belonging    = coalesce(organizational_belonging, organizational_belonging_2, organizational_belonging_3),
-         metropoline                  = coalesce(metropoline, metropoline_2),
-         settlement_type             = coalesce(settlement_type, settlement_type_2)
-         ) %>%  select (one_of( col_names))
+         metropoline                 = coalesce(metropoline, metropoline_2),
+         settlement_type             = coalesce(settlement_type, settlement_type_2),
+         year = id+2002
+         ) %>%  
+          select ( one_of( col_names))
   
-settlements_18_20$settlement_type <- as.character(settlements_18_20$settlement_type)
-settlements_18_20$coordination <-    as.character(settlements_18_20$coordination)
-
-settlements_03_20 <- bind_rows(settlements_03_17, settlements_18_20)
-
-write.xlsx(settlements_03_20, "products/settlements_03_20.xlsx")
 
 
-#settlements_list_raw_2017 <- read_excel("originals/settlements/settlements list/bycode2017.xls",  col_names = col_names, range = cell_limits(c(2, 2), c(NA, NA)))
+settlements_03_20_base <- bind_rows(settlements_03_17, settlements_18_20)
 
-#settlements_list_2020 <- settlements_list_raw_2020 %>%
-#  mutate(foundation_year = as.numeric(foundation_year) )
 
-#3. load files for number of olim by city (population 5000+)
+
+#2. load olim population by settlement for every year
+
+#list.files("originals/population by sattelment and geo area/olim population", full.names = TRUE)
+
+files_list_olim <- c("originals/population by sattelment and geo area/olim population/population_madaf_3.xls"       ,
+                     "originals/population by sattelment and geo area/olim population/population_madaf_3_15.xls"    ,
+                     "originals/population by sattelment and geo area/olim population/population_madaf_3_16.xlsx"   ,
+                     "originals/population by sattelment and geo area/olim population/t1.xlsx"                      ,
+                     "originals/population by sattelment and geo area/olim population/population_madaf_2018_1.xlsx" ,
+                     "originals/population by sattelment and geo area/olim population/population_madaf_2019_6.xlsx" ,
+                     "originals/population by sattelment and geo area/olim population/population_madaf_2020_11.xlsx"
+                     )
+
+
+
+col_names_olim <- c("city_name", "city_code", "total_population", "olim_population")
+col_types_olim <- c("text", "numeric", "numeric", "numeric")
+
+
+olim <- map_dfr(files_list_olim, read_excel, sheet = 2,  col_names = col_names_olim, col_types = col_types_olim, na = "..", .id = "year") %>%
+        filter(!is.na(city_code)) %>%
+        mutate(olim_population = replace_na(olim_population,0),
+               prc_olim = olim_population/total_population,
+               year = as.numeric(year) + 2013)
+        
+
+anti_join(olim, filter(settlements_03_20_base, year>2013), by = c("city_code", "year" )) #בדיקת שפיות: האם כל הערים בטבלת העולים מופיעות בטבלת הישובים?
+
+settlements_03_20 <- left_join(settlements_03_20_base, olim,  by = c("city_code", "year" ) )
+
+#settlements_14_20 <- filter(settlements_03_20, year>2013, total_population.x > 5000)
+# ok<- settlements_14_20[(settlements_14_20$city_name.x != settlements_14_20$city_name.y),]  
+# ok<- settlements_14_20[(settlements_14_20$total_population.x != settlements_14_20$total_population.y),]  %>%  mutate(diff =total_population.x- total_population.y)
+
+
+write_csv(settlements_03_20, "products/settlements_03_20.csv")
