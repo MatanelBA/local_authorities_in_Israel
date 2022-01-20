@@ -1,0 +1,102 @@
+
+
+library(pacman)
+p_load(dplyr, openxlsx, readxl,readr, tidyr, utf8)
+p_load(tidyverse, openxlsx, readxl, utf8, ggplot2, scales, magrittr)
+
+rm(list = objects())
+
+getwd()
+
+list.files("originals/socioeconomic attributes by geo area/2008/")
+
+#2017
+setwd("originals/socioeconomic attributes by geo area/2017/")
+
+col_names_geo_area_2017 <- c("city_code", "city_name", "geo_area_code", "index_population", "index_value", "rank", "cluster",
+                             "median_age",               "median_age_std",              "median_age_rank",
+                             "dependency_ratio",         "dependency_ratio_std",        "dependency_ratio_rank",
+                             "percent_families_4_",      "percent_families_4_std",      "percent_families_4_rank",
+                             "avg_years_scooling",       "avg_years_scooling_std",      "avg_years_scooling_rank",
+                             "percent_degree",           "percent_degree_std",          "percent_degree_rank",
+                             "percent_have_earning",     "percent_have_earning_std",    "percent_have_earning_rank",
+                             "percent_women_no_earning", "percent_women_noearning_std", "percent_women_no_earning_rank",
+                             "percent_high_earning",     "percent_high_earning_std",    "percent_high_earning_rank",
+                             "percent_low_earning",      "percent_low_earning_std",     "percent_low_earning_rank",
+                             "percent_get_support",      "percent_get_support_std",     "percent_get_support_rank",
+                             "avg_income_per_capita",    "avg_income_per_std",          "avg_income_per_rank",
+                             "rate_owned_viechles",      "rate_owned_std",              "rate_owned_rank",
+                             "avg_viechles_license",     "avg_viechles_std",            "avg_viechles_rank",
+                             "avg_days_abroad",          "avg_days_abroad_std",         "avg_days_abroad_rank",
+                             "city_name_english") 
+
+col_names_local_authorities_2017 <-  c("municipal_code", col_names_geo_area_2017[-3])
+
+
+col_names_settelments_2017 <-  c("municipal_status", "drop_1",          "drop_2", "drop_3", "drop_4",
+                                 "city_code",        "city_name",        "city_name_english",
+                                 "settlement_type",  "index_population", "index_value",
+                                 "rank",             "cluster",          "drop_5")
+
+
+socioeconomic_local_authorities_raw_2017 <- read_xls("t01.xls",  na = c("", ".."), col_names = col_names_local_authorities_2017)
+socioeconomic_settelments_raw_2017       <- read_xls("t07.xls",  na = c("", ".."), col_names = col_names_settelments_2017)
+socioeconomic_geo_area_raw_2017          <- read_xls("t12.xls",  na = c("", ".."), col_names = col_names_geo_area_2017)
+
+setwd("./../../..")
+
+#2015
+
+setwd("originals/socioeconomic attributes by geo area/2015/")
+col_names_settelments_2015 <- c(col_names_settelments_2017[-c(4,5,9)],"drop_6")
+
+col_names_geo_area_2015 <-   c(col_names_geo_area_2017[1:7] , "drop_1")
+
+socioeconomic_local_authorities_raw_2015 <- read_xlsx("t01.xlsx",         na = c("", ".."), col_names = col_names_local_authorities_2017)
+socioeconomic_settelments_raw_2015       <- read_xlsx("t07.xlsx",         na = c("", ".."), col_names = col_names_settelments_2015)
+socioeconomic_geo_area_raw_2015          <- read_xls ("24_19_246t1.xls",  na = c("", ".."), col_names = col_names_geo_area_2015) # כאן חסרים משתני העזר
+ 
+setwd("./../../..")
+
+#2013
+setwd("originals/socioeconomic attributes by geo area/2013/")
+
+col_names_settelments_2013 <- c("municipal_status",     "drop_1",            "drop_2" ,
+                                "drop_3",            "drop_4",             "city_code",
+                                "city_name" ,         "city_name_english", "city_type",
+                                "index_population", "index_value",       "cluster" ) 
+
+socioeconomic_local_authorities_raw_2013 <- read_xls("t01.xls", na = c("", ".."), col_names = col_names_local_authorities_2017)
+socioeconomic_settelments_raw_2013       <- read_xls("t07.xls", na = c("", ".."), col_names = col_names_settelments_2013)
+
+setwd("./../../..")
+
+#2008
+# setwd("originals/socioeconomic attributes by geo area/2008/")
+# המשתנים ששימשו לחישוב המדד היו שונים בשנה זו. דורש להזין מחדש את שמות העמודות
+# socioeconomic_local_authorities_raw_2008 <- read_xls("tab01_01.xls")
+# socioeconomic_geo_area_raw_2008          <- read_xls("tab02_01.xls")
+# 
+# setwd("./../../..")
+
+
+
+#merge 
+
+socioeconomic_local_authorities_raw <- bind_rows(socioeconomic_local_authorities_raw_2013,
+                                                 socioeconomic_local_authorities_raw_2015,
+                                                 socioeconomic_local_authorities_raw_2017,
+                                                 .id = "year") %>%
+                    mutate(year = as.numeric(year)^2+2012)
+
+socioeconomic_geo_area_raw <- bind_rows(socioeconomic_geo_area_raw_2015,
+                                        socioeconomic_geo_area_raw_2017,
+                                                 .id = "year")
+
+socioeconomic_settelments_raw <- bind_rows(socioeconomic_settelments_raw_2013,
+                                           socioeconomic_settelments_raw_2015,
+                                           socioeconomic_settelments_raw_2017,
+                                                 .id = "year")
+
+
+#rm(list = objects(pattern = "*\\d"))
