@@ -33,7 +33,7 @@ col_names_geo_area_2017 <- c("city_code", "city_name", "geo_area_code", "index_p
 col_names_local_authorities_2017 <-  c("municipal_code", col_names_geo_area_2017[-3])
 
 
-col_names_settelments_2017 <-  c("municipal_status", "drop_1",          "drop_2", "drop_3", "drop_4",
+col_names_settelments_2017 <-  c("municipal_code", "drop_1",          "drop_2", "drop_3", "drop_4",
                                  "city_code",        "city_name",        "city_name_english",
                                  "settlement_type",  "index_population", "index_value",
                                  "rank",             "cluster",          "drop_5")
@@ -61,9 +61,9 @@ setwd("./../../..")
 #2013
 setwd("originals/socioeconomic attributes by geo area/2013/")
 
-col_names_settelments_2013 <- c("municipal_status",     "drop_1",            "drop_2" ,
+col_names_settelments_2013 <- c("municipal_code",     "drop_1",            "drop_2" ,
                                 "drop_3",            "drop_4",             "city_code",
-                                "city_name" ,         "city_name_english", "city_type",
+                                "city_name" ,         "city_name_english", "settlement_type",
                                 "index_population", "index_value",       "cluster" ) 
 
 socioeconomic_local_authorities_raw_2013 <- read_xls("t01.xls", na = c("", ".."), col_names = col_names_local_authorities_2017)
@@ -87,16 +87,44 @@ socioeconomic_local_authorities_raw <- bind_rows(socioeconomic_local_authorities
                                                  socioeconomic_local_authorities_raw_2015,
                                                  socioeconomic_local_authorities_raw_2017,
                                                  .id = "year") %>%
-                    mutate(year = as.numeric(year)^2+2012)
+                                       mutate(year = case_when(year == "1" ~ 2013,
+                                                               year == "2" ~ 2015,
+                                                               year == "3" ~ 2017 ))
+                                            
 
 socioeconomic_geo_area_raw <- bind_rows(socioeconomic_geo_area_raw_2015,
                                         socioeconomic_geo_area_raw_2017,
-                                                 .id = "year")
+                                                 .id = "year")  %>%
+                               mutate(year = case_when(year == "1" ~ 2015,
+                                                       year == "2" ~ 2017))
 
 socioeconomic_settelments_raw <- bind_rows(socioeconomic_settelments_raw_2013,
                                            socioeconomic_settelments_raw_2015,
                                            socioeconomic_settelments_raw_2017,
-                                                 .id = "year")
+                                                 .id = "year")   %>%
+                                 mutate(year = case_when(year == "1" ~ 2013,
+                                                         year == "2" ~ 2015,
+                                                         year == "3" ~ 2017 ))
+
+rm(list = objects(pattern = "*\\d"))
 
 
-#rm(list = objects(pattern = "*\\d"))
+socioeconomic_raw <- bind_rows(socioeconomic_local_authorities_raw,
+                               socioeconomic_geo_area_raw,
+                               socioeconomic_settelments_raw,
+                               .id = "data_type") %>%
+                   mutate(data_type = case_when(data_type == "1" ~ "local_authorities",
+                                                data_type == "2" ~ "geo_area",
+                                                data_type == "3" ~ "settelments" ),
+                          municipal_code = if_else(municipal_code %in% c(0,99),
+                                                   NA_integer_ ,
+                                                   as.integer(municipal_code)),
+                           city_code          = as.integer(city_code),
+                          settlement_type     = as.integer(settlement_type),
+                           geo_area_code      = as.integer(geo_area_code)
+                          ) %>%
+                   mutate(place_code = coalesce(.$municipal_code, .$city_code)) %>%
+                   select(-starts_with("drop")) %>%
+  relocate( settlement_type, geo_area_code ,place_code, city_name_english, .after = city_code)
+
+
