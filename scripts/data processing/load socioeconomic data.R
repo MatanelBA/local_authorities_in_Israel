@@ -123,8 +123,56 @@ socioeconomic_raw <- bind_rows(socioeconomic_local_authorities_raw,
                           settlement_type     = as.integer(settlement_type),
                            geo_area_code      = as.integer(geo_area_code)
                           ) %>%
-                   mutate(place_code = coalesce(.$municipal_code, .$city_code)) %>%
-                   select(-starts_with("drop")) %>%
-  relocate( settlement_type, geo_area_code ,place_code, city_name_english, .after = city_code)
+                   mutate(place_code_temp  = coalesce(.$city_code,.$municipal_code),
+                          geo_area_code = replace_na(geo_area_code, 0)
+                          ) %>%
+                   mutate(place_code       = factor(paste(place_code_temp, geo_area_code, sep = "_") )) %>%
+          #         select(-c(starts_with("drop"), city_code, municipal_code, settlement_type)) %>%
+  relocate(  geo_area_code ,place_code, city_name_english, .after = year ) 
+
+# check <- socioeconomic_raw %>%
+#   filter(!is.na(municipal_code) & !is.na(city_code))%>%
+#      group_by(year, data_type)
+# 
+# sum(duplicated(check$city_code))
 
 
+socioeconomic <- socioeconomic_raw %>%
+    mutate(across(7:53, as.numeric )) %>%
+    filter(! (is.na(median_age) & is.na(index_population) ) )
+
+glimpse(socioeconomic)
+
+# socioeconomic_not_ok <- socioeconomic %>%
+#   group_by(year, data_type) %>%
+#   summarise(num = n(),
+#             num_na_geo_area_code =sum(is.na(geo_area_code)),
+#             num_na_place_code =sum(is.na(place_code)),
+#             num_na_city_name =sum(is.na(city_name)),
+#             .groups = "keep")
+# 
+#  sum(duplicated(socioeconomic$place_code))
+# # 
+# # socioeconomic_not_ok <- socioeconomic_raw %>%
+# #   mutate(across(7:53, as.numeric )) %>%
+# #   filter( (is.na(median_age) & is.na(index_population) ) )
+# 
+#  socioeconomic_not_ok <- socioeconomic %>%
+#    group_by(year, data_type) %>%
+#    summarise(across(5:51, mean, na.rm = TRUE),.groups = "keep")%>%
+#    arrange(data_type, year)
+# 
+#  socioeconomic %>% ggplot(aes(fct_reorder(place_code, rank), index_value)) +
+#    geom_point()+
+#    facet_grid(year~data_type, scales = "free")+
+#    coord_flip()
+#  
+#  
+# socioeconomic %>% 
+#    filter(year == 2015, data_type == "settelments") %>% 
+#  # ungroup() %>%
+#    arrange(rank) %>%
+#    ggplot(aes(fct_reorder(place_code, index_value, na.rm = TRUE), index_value)) +
+#    geom_point() +
+#    coord_flip()
+#  
