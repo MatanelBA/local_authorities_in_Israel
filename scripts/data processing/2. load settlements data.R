@@ -27,7 +27,6 @@ settlements_18_20 <- map_dfr(files_list_xlsx, read_excel, col_names = col_names,
                              coordination    = as.character(coordination)
                               )
 
-##עד כאן עובד
 
 files_list_xls <- list.files("originals/settlements/settlements list/", pattern = "xls$", full.names = TRUE)
 
