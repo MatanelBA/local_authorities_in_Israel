@@ -127,7 +127,7 @@ socioeconomic_raw <- bind_rows(socioeconomic_local_authorities_raw,
                           geo_area_code = replace_na(geo_area_code, 0)
                           ) %>%
                    mutate(place_code       = factor(paste(place_code_temp, geo_area_code, sep = "_") )) %>%
-          #         select(-c(starts_with("drop"), city_code, municipal_code, settlement_type)) %>%
+          #        select(-c(starts_with("drop"), city_code, municipal_code, settlement_type)) %>%
   relocate(  geo_area_code ,place_code, city_name_english, .after = year ) 
 
 # check <- socioeconomic_raw %>%

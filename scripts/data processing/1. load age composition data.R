@@ -82,17 +82,6 @@ city_type_by_year <- age_composition_by_geo_area %>%
                       select(year, city_code,city_type)%>%
                       distinct()
 
-##הפרסום לשנת 2020 שונה. צריך לבדוק שוב באתר הלמס האם יש טבלה מקבילה לטבלאות האחרות
-# 
-# col_names <- c('city_code', 'city_name', 'geo_code', 'gender', 'total', '4_0', '5-9', '10-14', '15-19', '20_24', '25_29', '30_34', '35_39', '40_44', '45_49', '50_54', '55_59', '60_64', '65+')
-# 
-# age_composition_by_geo_area_2020_j <- read_excel("originals/population by sattelment and geo area/age composition by geo area/population_madaf_2020_7.xlsx", 
-#                                                  sheet = 2,
-#                                                  skip = 14,
-#                                                  col_names = col_names)
-# View(age_composition_by_geo_area_2020)
-# glimpse(age_composition_by_geo_area_2020)
-
 
 
 #2. load files for age composition by population group and geo area (mixed cities only)
@@ -145,6 +134,7 @@ age_composition_by_area_pop_group <- read_excel("./population_madaf_2.xls", shee
 age_composition <- age_composition_by_geo_area %>% 
                         mutate (population_group = "total_population") %>%
                         bind_rows(age_composition_by_area_pop_group)   %>%
+                         filter(!is.na(city_code))                     %>%
                         relocate(population_group, .after = geo_code)  %>%
                         arrange(year, city_type, city_code, geo_code, desc(population_group) )
                       
@@ -155,8 +145,22 @@ dict_city_type <- read_excel("originals/dictionaries.xlsx", sheet = "city_type")
 age_composition_wide <- left_join(age_composition,dict_city_type, by = c("city_type" = "city_type_code") )%>%
                     select(-elaborated_description) %>%
                     mutate(geo_code = replace_na(geo_code, 0))  %>%
-                    mutate(place_code = paste(city_code, geo_code, sep = "_"))%>%
+                    mutate(place_code = paste(city_code, geo_code, sep = "_"),
+                           data_type ==  "geo_area"
+                           )%>%
                     relocate(city_type_desc,place_code, .after = 2) 
+
+age_composition_wide_moshav <-filter(age_composition_wide, city_type_desc == "jewish_moshav_2k")
+
+
+#בדיקה לאיתור כפילויות
+# age_composition_wide_dup <- age_composition_wide %>%
+#                    #         filter( population_group == "total_population")%>%
+#                             group_by(place_code,year, population_group) %>% 
+#                             summarise(num = n(), .groups = "keep") %>%
+#                             filter(num>1)
+
+
 
 
 write_csv(age_composition_wide, "products/age_composition_geo_area_14_20_wide.csv")

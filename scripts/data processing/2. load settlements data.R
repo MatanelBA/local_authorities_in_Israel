@@ -12,7 +12,7 @@ getwd()
 
 col_names <- c("city_name", "city_code", "city_name_english",
                "district", "subdistrict", "natural_region", 
-               "municipal_status", "metropoline", "religion",
+               "municipal_code", "metropoline", "religion",
                "total_population", "jewish_and_other_population", "jewish_population",
                "arab_population", "foundation_year", "settlement_type",
                "organizational_belonging", "coordination", "avg_haight", 
@@ -36,7 +36,7 @@ settlements_03_17_raw <- rbindlist(settlements_03_17_list, use.names = TRUE, fil
                           as_tibble()
 
 col_names_long <- c("id", "city_name", "city_code", 
-                "subdistrict","municipal_status", "natural_region", 
+                "subdistrict","municipal_code", "natural_region", 
                  "religion","planning_committee",
                "total_population", "jewish_and_other_population", "jewish_population",
                "arab_population", "no_pop", "coordination",
@@ -46,7 +46,7 @@ col_names_long <- c("id", "city_name", "city_code",
                "foundation_year", "city_name_english",
                "avg_haight","police_district", "avg_haight_2",
                "city_name_2", "city_name_3","city_name_english_2",
-               "district", "municipal_status_2","metropoline_2",
+               "district", "municipal_code_2","metropoline_2",
                "religion_2", "total_population_2", "jewish_and_other_population_2",
                "jewish_population_2", "arab_population_2", "coordination_2", "avg_haight_3",
                "connection", "total_population_3",  "jewish_and_other_population_3",
@@ -54,7 +54,7 @@ col_names_long <- c("id", "city_name", "city_code",
                "planning_committee_2",
                "city_name_english_3", "total_population_4", "total_population_5",
                "city_name_4", "city_name_5", 
-               "city_code_2", "city_name_english_4", "municipal_status_3",
+               "city_code_2", "city_name_english_4", "municipal_code_3",
                "religion_3", "total_population_6", "avg_haight_4",
                "city_name_english_5", "total_population_7", "year_2", 
                "total_population_8", "police_district_2", "total_population_9",
@@ -91,11 +91,20 @@ settlements_03_17 <- settlements_03_17_raw %>%
   
 
 
-settlements_03_20_base <- bind_rows(settlements_03_17, settlements_18_20)
+settlements_03_20_base <- bind_rows(settlements_03_17, settlements_18_20) %>%
+  filter(!is.na(city_code)) %>%
+  mutate( municipal_code = if_else(municipal_code %in% c(0,99),
+                                   NA_integer_ ,
+                                   as.integer(municipal_code) ),
+          foundation_year = as.integer(foundation_year),
+          place_code = paste(city_code, "0", sep = "_"),
+         data_type =  "settlement"
+         )%>%
+  relocate(data_type,place_code, .before =  1) 
 
 
 
-#2. load olim population by settlement for every year
+#2. load olim population by settlement for every year and connect it
 
 #list.files("originals/population by sattelment and geo area/olim population", full.names = TRUE)
 
@@ -121,13 +130,14 @@ olim <- map_dfr(files_list_olim, read_excel, sheet = 2,  col_names = col_names_o
                year = as.numeric(year) + 2013)
         
 
-anti_join(olim, filter(settlements_03_20_base, year>2013), by = c("city_code", "year" )) #בדיקת שפיות: האם כל הערים בטבלת העולים מופיעות בטבלת הישובים?
 
 settlements_03_20 <- left_join(settlements_03_20_base, olim,  by = c("city_code", "year" ) )
 
-#settlements_14_20 <- filter(settlements_03_20, year>2013, total_population.x > 5000)
-# ok<- settlements_14_20[(settlements_14_20$city_name.x != settlements_14_20$city_name.y),]  
-# ok<- settlements_14_20[(settlements_14_20$total_population.x != settlements_14_20$total_population.y),]  %>%  mutate(diff =total_population.x- total_population.y)
+# anti_join(olim, filter(settlements_03_20_base, year>2013), by = c("city_code", "year" )) #בדיקת שפיות: האם כל הערים בטבלת העולים מופיעות בטבלת הישובים?
+# glimpse(settlements_03_20)
+# settlements_03_20 %>% group_by(year, place_code) %>%
+#   summarise(num = n()) %>%
+#   filter(num>1)
 
 
 write_csv(settlements_03_20, "products/settlements_03_20.csv")
