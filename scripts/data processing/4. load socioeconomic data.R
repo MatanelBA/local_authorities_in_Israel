@@ -92,19 +92,19 @@ socioeconomic_local_authorities_raw <- bind_rows(socioeconomic_local_authorities
                                                                year == "3" ~ 2017 ))
                                             
 
-socioeconomic_geo_area_raw <- bind_rows(socioeconomic_geo_area_raw_2015,
-                                        socioeconomic_geo_area_raw_2017,
-                                                 .id = "year")  %>%
-                               mutate(year = case_when(year == "1" ~ 2015,
-                                                       year == "2" ~ 2017))
+socioeconomic_geo_area_raw <-          bind_rows(socioeconomic_geo_area_raw_2015,
+                                                 socioeconomic_geo_area_raw_2017,
+                                                          .id = "year")  %>%
+                                        mutate(year = case_when(year == "1" ~ 2015,
+                                                                year == "2" ~ 2017))
 
-socioeconomic_settelments_raw <- bind_rows(socioeconomic_settelments_raw_2013,
-                                           socioeconomic_settelments_raw_2015,
-                                           socioeconomic_settelments_raw_2017,
-                                                 .id = "year")   %>%
-                                 mutate(year = case_when(year == "1" ~ 2013,
-                                                         year == "2" ~ 2015,
-                                                         year == "3" ~ 2017 ))
+socioeconomic_settelments_raw <-       bind_rows(socioeconomic_settelments_raw_2013,
+                                                 socioeconomic_settelments_raw_2015,
+                                                 socioeconomic_settelments_raw_2017,
+                                                       .id = "year")   %>%
+                                       mutate(year = case_when(year == "1" ~ 2013,
+                                                               year == "2" ~ 2015,
+                                                               year == "3" ~ 2017 ))
 
 rm(list = objects(pattern = "*\\d"))
 
@@ -116,18 +116,19 @@ socioeconomic_raw <- bind_rows(socioeconomic_local_authorities_raw,
                    mutate(data_type = case_when(data_type == "1" ~ "local_authorities",
                                                 data_type == "2" ~ "geo_area",
                                                 data_type == "3" ~ "settelments" ),
-                          municipal_code = if_else(municipal_code %in% c(0,99),
+                           municipal_code = if_else(municipal_code %in% c(0,99),
                                                    NA_integer_ ,
                                                    as.integer(municipal_code)),
                            city_code          = as.integer(city_code),
-                          settlement_type     = as.integer(settlement_type),
-                           geo_area_code      = as.integer(geo_area_code)
+                           settlement_type    = as.integer(settlement_type),
+                           geo_area_code      = as.integer(replace_na(geo_area_code, 0))
                           ) %>%
-                   mutate(place_code_temp  = coalesce(.$city_code,.$municipal_code),
-                          geo_area_code = replace_na(geo_area_code, 0)
-                          ) %>%
-                   mutate(place_code       = factor(paste(place_code_temp, geo_area_code, sep = "_") )) %>%
-          #        select(-c(starts_with("drop"), city_code, municipal_code, settlement_type)) %>%
+                   mutate(place_code       = case_when(is.na(municipal_code) == TRUE  &  is.na(city_code)  == TRUE  ~ "drop" ,
+                                                       is.na(municipal_code) == FALSE &  is.na(city_code)  == TRUE  ~ paste(municipal_code, "999", sep = "_"),
+                                                       is.na(municipal_code) == TRUE  &  is.na(city_code)  == FALSE ~ paste(city_code, geo_area_code, sep = "_"), 
+                                                       is.na(municipal_code) == FALSE &  is.na(city_code)  == FALSE ~ paste(city_code, geo_area_code, sep = "_") 
+                                                     ) )%>%
+                  select(-c(starts_with("drop"), city_code, municipal_code, settlement_type)) %>%
   relocate(  geo_area_code ,place_code, city_name_english, .after = year ) 
 
 # check <- socioeconomic_raw %>%
@@ -138,11 +139,19 @@ socioeconomic_raw <- bind_rows(socioeconomic_local_authorities_raw,
 
 
 socioeconomic <- socioeconomic_raw %>%
-    mutate(across(7:53, as.numeric )) %>%
-    filter(! (is.na(median_age) & is.na(index_population) ) )
+    mutate(across(8:52, as.numeric )) %>%
+     filter (place_code != "drop")
 
-glimpse(socioeconomic)
-
+write_csv(socioeconomic, "products/socioeconomic_13_17.csv")
+# 
+# glimpse(socioeconomic)
+# 
+# socioeconomic_dub <- socioeconomic %>%
+#   group_by(year, data_type, place_code) %>%
+#   summarise(num = n() , .groups = "keep") 
+# 
+# 
+# 
 # socioeconomic_not_ok <- socioeconomic %>%
 #   group_by(year, data_type) %>%
 #   summarise(num = n(),
@@ -150,25 +159,25 @@ glimpse(socioeconomic)
 #             num_na_place_code =sum(is.na(place_code)),
 #             num_na_city_name =sum(is.na(city_name)),
 #             .groups = "keep")
-# 
-#  sum(duplicated(socioeconomic$place_code))
 # # 
-# # socioeconomic_not_ok <- socioeconomic_raw %>%
-# #   mutate(across(7:53, as.numeric )) %>%
-# #   filter( (is.na(median_age) & is.na(index_population) ) )
 # 
-#  socioeconomic_not_ok <- socioeconomic %>%
-#    group_by(year, data_type) %>%
-#    summarise(across(5:51, mean, na.rm = TRUE),.groups = "keep")%>%
-#    arrange(data_type, year)
-# 
-#  socioeconomic %>% ggplot(aes(fct_reorder(place_code, rank), index_value)) +
-#    geom_point()+
-#    facet_grid(year~data_type, scales = "free")+
-#    coord_flip()
-#  
-#  
-# socioeconomic %>% 
+# # # 
+# # # socioeconomic_not_ok <- socioeconomic_raw %>%
+# # #   mutate(across(7:53, as.numeric )) %>%
+# # #   filter( (is.na(median_age) & is.na(index_population) ) )
+# # 
+# #  socioeconomic_not_ok <- socioeconomic %>%
+# #    group_by(year, data_type) %>%
+# #    summarise(across(5:51, mean, na.rm = TRUE),.groups = "keep")%>%
+# #    arrange(data_type, year)
+# # 
+# #  socioeconomic %>% ggplot(aes(fct_reorder(place_code, rank), index_value)) +
+# #    geom_point()+
+# #    facet_grid(year~data_type, scales = "free")+
+# #    coord_flip()
+# #  
+# #  
+# # socioeconomic %>% 
 #    filter(year == 2015, data_type == "settelments") %>% 
 #  # ungroup() %>%
 #    arrange(rank) %>%

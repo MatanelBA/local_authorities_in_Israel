@@ -35,9 +35,8 @@ age_composition_by_geo_area_19_20 <- map_dfr(c( "population_madaf_2019_7.xlsx",
                                               read_excel, sheet = 'סה"כ אוכלוסייה', col_names = col_names_19_20, na = "..", .id = "year") %>%
                                      filter(!is.na(city_name)  ) %>%
                                      mutate(across(col_names_19_20[-3], as.numeric))%>%
-                                     mutate(
-                                            year     = as.numeric(year)+2018,
-                                            `75+`    = sum(`75_79`, `80_84`,`85+`, na.rm = TRUE ),
+                        rowwise()%>% mutate( `75+`   = sum(`75_79`, `80_84`,`85+`, na.rm = TRUE ) ) %>%
+                                     mutate(year     = as.numeric(year) + 2018,
                                             geo_code = if_else(geo_code == 'סך הכל' , 
                                                                0,
                                                                as.numeric(geo_code) )
@@ -145,12 +144,12 @@ dict_city_type <- read_excel("originals/dictionaries.xlsx", sheet = "city_type")
 age_composition_wide <- left_join(age_composition,dict_city_type, by = c("city_type" = "city_type_code") )%>%
                     select(-elaborated_description) %>%
                     mutate(geo_code = replace_na(geo_code, 0))  %>%
-                    mutate(place_code = paste(city_code, geo_code, sep = "_"),
-                           data_type ==  "geo_area"
+                    mutate(place_code = paste(city_code, geo_code, sep = "_") ,
+                           data_type  =  "geo_area"
                            )%>%
                     relocate(city_type_desc,place_code, .after = 2) 
 
-age_composition_wide_moshav <-filter(age_composition_wide, city_type_desc == "jewish_moshav_2k")
+#age_composition_wide_moshav <-filter(age_composition_wide, city_type_desc == "jewish_moshav_2k")
 
 
 #בדיקה לאיתור כפילויות
@@ -169,6 +168,6 @@ write_csv(age_composition_wide, "products/age_composition_geo_area_14_20_wide.cs
 age_composition_long <- age_composition_wide %>%
                           pivot_longer(cols      = names(age_composition_wide)[9:25],
                                        names_to  = "age_group",
-                                       values_to = "namber")
+                                       values_to = "number")
 
 write_csv(age_composition_long, "products/age_composition_geo_area_14_20_long.csv")

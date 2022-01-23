@@ -127,14 +127,16 @@ olim <- map_dfr(files_list_olim, read_excel, sheet = 2,  col_names = col_names_o
         filter(!is.na(city_code)) %>%
         mutate(olim_population = replace_na(olim_population,0),
                prc_olim = olim_population/total_population,
-               year = as.numeric(year) + 2013)
+               year = as.numeric(year) + 2013) %>%
+        select(-total_population,  -city_name)
         
 
 
 settlements_03_20 <- left_join(settlements_03_20_base, olim,  by = c("city_code", "year" ) )
 
+
 # anti_join(olim, filter(settlements_03_20_base, year>2013), by = c("city_code", "year" )) #בדיקת שפיות: האם כל הערים בטבלת העולים מופיעות בטבלת הישובים?
-# glimpse(settlements_03_20)
+ glimpse(settlements_03_20)
 # settlements_03_20 %>% group_by(year, place_code) %>%
 #   summarise(num = n()) %>%
 #   filter(num>1)
