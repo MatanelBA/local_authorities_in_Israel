@@ -12,9 +12,9 @@ settlements_13_20 <- read_csv( "products/settlements_03_20.csv") %>%
   filter(year>2012,
          total_population > 1)
 
-settlements_13_20_names <- settlements_13_20 %>%
-                            group_by(city_name, place_code) %>%
-                            summarise()
+# settlements_13_20_names <- settlements_13_20 %>%
+#                             group_by(city_name, place_code) %>%
+#                             summarise()
 
 socioeconomic <- read_csv( "products/socioeconomic_13_17.csv")
 
@@ -34,21 +34,9 @@ glimpse(local_data)
 
 local_data %>% 
   arrange(data_type, place_code, year) %>%
-  vis_miss( warn_large_data = FALSE)
+  vis_miss( warn_large_data = FALSE,  cluster = TRUE)
 
 local_data %>% 
   arrange(data_type, place_code, year) %>%
-  vis_dat(warn_large_data = FALSE)
+  vis_dat(warn_large_data = FALSE, large_data_size = TRUE)
 
-#1. connect tables by geo_area
-
-#1.1 add socioeconomic data to age composition data
-
-#1.2 add geo_area description
-
-#2. connect tables by settelments
-
-
-#2.1 add local authorities to settelment table 
-
-#3. add settelment table to geo_area table
